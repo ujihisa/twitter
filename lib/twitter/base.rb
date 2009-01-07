@@ -21,7 +21,7 @@ module Twitter
     # Returns an array of statuses for a timeline; Defaults to your friends timeline.
     def timeline(which=:friends, options={})
       raise UnknownTimeline unless [:friends, :public, :user].include?(which)
-      auth = which.to_s.include?('public') ? false : true
+      auth = !which.to_s.include?('public')
       statuses(call("#{which}_timeline", :auth => auth, :since => options[:since], :args => parse_options(options)))
     end
 
@@ -76,14 +76,14 @@ module Twitter
     # Returns an array of all the direct messages for the authenticated user
     def direct_messages(options={})
       doc = request(build_path('direct_messages.xml', parse_options(options)), {:auth => true, :since => options[:since]})
-      (doc/:direct_message).inject([]) { |dms, dm| dms << DirectMessage.new_from_xml(dm); dms }
+      (doc/:direct_message).map {|dm| DirectMessage.new_from_xml(dm) }
     end
     alias :received_messages :direct_messages
 
     # Returns direct messages sent by auth user
     def sent_messages(options={})
       doc = request(build_path('direct_messages/sent.xml', parse_options(options)), {:auth => true, :since => options[:since]})
-      (doc/:direct_message).inject([]) { |dms, dm| dms << DirectMessage.new_from_xml(dm); dms }
+      (doc/:direct_message).map {|dm| DirectMessage.new_from_xml(dm) }
     end
 
     # destroys a give direct message by id if the auth user is a recipient
@@ -109,7 +109,7 @@ module Twitter
     # Returns true if friendship exists, false if it doesn't.
     def friendship_exists?(user_a, user_b)
       doc = request(build_path("friendships/exists.xml", {:user_a => user_a, :user_b => user_b}), :auth => true)
-      doc.at('friends').innerHTML == 'true' ? true : false
+      doc.at('friends').innerHTML == 'true'
     end
 
     # Updates your location and returns Twitter::User object
@@ -175,12 +175,12 @@ module Twitter
     private
       # Converts an hpricot doc to an array of statuses
       def statuses(doc)
-        (doc/:status).inject([]) { |statuses, status| statuses << Status.new_from_xml(status); statuses }
+        (doc/:status).map {|status| Status.new_from_xml(status) }
       end
 
       # Converts an hpricot doc to an array of users
       def users(doc)
-        (doc/:user).inject([]) { |users, user| users << User.new_from_xml(user); users }
+        (doc/:user).map {|user| User.new_from_xml(user) }
       end
 
       # Calls whatever api method requested that deals with statuses
@@ -228,15 +228,16 @@ module Twitter
       end
 
       def handle_response!(response)
-        if %w[200 304].include?(response.code)
+        case response.code
+        when '200', '304'
           response = parse(response.body)
           raise RateExceeded if (response/:hash/:error).text =~ /Rate limit exceeded/
           response
-        elsif response.code == '503'
+        when '503'
           raise Unavailable, response.message
-        elsif response.code == '401'
+        when '401'
           raise CantConnect, 'Authentication failed. Check your username and password'
-        elsif response.code == '403'
+        when '403'
           error_message = (parse(response.body)/:hash/:error).text
           raise CantFindUsers, error_message  if error_message =~ /Could not find both specified users/
           raise AlreadyFollowing, error_message if error_message =~ /already on your list/
@@ -249,7 +250,7 @@ module Twitter
       # Given a path and a hash, build a full path with the hash turned into a query string
       def build_path(path, options)
         unless options.nil?
-          query = options.inject('') { |str, h| str += "#{CGI.escape(h[0].to_s)}=#{CGI.escape(h[1].to_s)}&"; str }
+          query = options.inject('') { |str, h| str + "#{CGI.escape(h[0].to_s)}=#{CGI.escape(h[1].to_s)}&" }
           path += "?#{query}"
         end
 
