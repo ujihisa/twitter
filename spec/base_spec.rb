@@ -54,7 +54,7 @@ describe "Twitter::Base" do
       @base.friends(:lite => true).size.should == 15
     end
 
-    it "should be able to get friends" do
+    it "should be able to get all friends" do
       data = open(File.dirname(__FILE__) + '/fixtures/friends.xml').read
       @base.should_receive(:request).
         with("statuses/friends.xml?page=0&", {:auth=>true}).
