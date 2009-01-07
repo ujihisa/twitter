@@ -34,7 +34,7 @@ module Twitter
     def all_friends(options={})
       memo = []; i = -1
       begin
-        memo += tmp = friends(options.update(:page => (i+=1)))
+        memo += tmp = friends(options.merge(:page => (i+=1)))
       end until tmp.empty?
       memo
     end
