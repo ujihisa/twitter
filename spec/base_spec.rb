@@ -54,6 +54,17 @@ describe "Twitter::Base" do
       @base.friends(:lite => true).size.should == 15
     end
 
+    it "should be able to get friends" do
+      data = open(File.dirname(__FILE__) + '/fixtures/friends.xml').read
+      @base.should_receive(:request).
+        with("statuses/friends.xml?page=0&", {:auth=>true}).
+        and_return(Hpricot::XML(data))
+      @base.should_receive(:request).
+        with("statuses/friends.xml?page=1&", {:auth=>true}).
+        and_return(Hpricot::XML(""))
+      @base.all_friends.size.should == 25
+    end
+
     it "should be able to get friends for another user" do
       data = open(File.dirname(__FILE__) + '/fixtures/friends_for.xml').read
       @base.should_receive(:request).and_return(Hpricot::XML(data))

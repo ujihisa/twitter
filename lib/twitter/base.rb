@@ -25,9 +25,18 @@ module Twitter
       statuses(call("#{which}_timeline", :auth => auth, :since => options[:since], :args => parse_options(options)))
     end
 
-    # Returns an array of users who are in your friends list
+    # Returns an array of users who are in your friends list (max: 100)
     def friends(options={})
       users(call(:friends, {:args => parse_options(options)}))
+    end
+
+    # Returns an array of users who are in your friends list (all)
+    def all_friends(options={})
+      memo = []; i = -1
+      begin
+        memo += tmp = friends(options.update(:page => (i+=1)))
+      end until tmp.empty?
+      memo
     end
 
     # Returns an array of users who are friends for the id or username passed in
