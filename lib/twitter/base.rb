@@ -39,9 +39,14 @@ module Twitter
       memo
     end
 
-    # Returns an array of users who are friends for the id or username passed in
+    # Returns an array of users who are friends for the id or username passed in (max: 100)
     def friends_for(id, options={})
       friends(options.merge({:id => id}))
+    end
+
+    # Returns an array of users who are friends for the id or username passed in (all)
+    def all_friends_for(id, options={})
+      all_friends(options.merge({:id => id}))
     end
 
     # Returns an array of users who are following you

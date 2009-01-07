@@ -73,6 +73,19 @@ describe "Twitter::Base" do
       timeline.first.name.should == 'Jack Dorsey'
     end
 
+    it "should be able to get all friends for another user" do
+      data = open(File.dirname(__FILE__) + '/fixtures/friends_for.xml').read
+      @base.should_receive(:request).
+        with("statuses/friends.xml?page=0&id=20&", {:auth=>true}).
+        and_return(Hpricot::XML(data))
+      @base.should_receive(:request).
+        with("statuses/friends.xml?page=1&id=20&", {:auth=>true}).
+        and_return(Hpricot::XML(""))
+      timeline = @base.all_friends_for(20)
+      timeline.size.should == 24
+      timeline.first.name.should == 'Jack Dorsey'
+    end
+
     it "should be able to get followers" do
       data = open(File.dirname(__FILE__) + '/fixtures/followers.xml').read
       @base.should_receive(:request).and_return(Hpricot::XML(data))
